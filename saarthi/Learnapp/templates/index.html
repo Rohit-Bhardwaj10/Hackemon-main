@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Saarthi Learnapp Frontend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="password"], input[type="email"], textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+        .output {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            background: #eee;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        nav {
+            margin-bottom: 20px;
+        }
+        nav button {
+            margin-right: 10px;
+            background-color: #28a745;
+        }
+        nav button.active {
+            background-color: #0056b3;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Saarthi Learnapp Frontend</h1>
+        <nav>
+            <button id="nav-register" class="active">Register</button>
+            <button id="nav-login">Login</button>
+            <button id="nav-generate">Generate Module & Test</button>
+            <button id="nav-diagnostic">Submit Diagnostic Test</button>
+            <button id="nav-explanation">Get Explanation</button>
+            <button id="nav-simplify">Simplify Text</button>
+        </nav>
+
+        <div id="register-section">
+            <h2>Register</h2>
+            <label>Username</label>
+            <input type="text" id="register-username" />
+            <label>Password</label>
+            <input type="password" id="register-password" />
+            <label>Email</label>
+            <input type="email" id="register-email" />
+            <button id="register-btn">Register</button>
+            <div class="output" id="register-output"></div>
+        </div>
+
+        <div id="login-section" class="hidden">
+            <h2>Login</h2>
+            <label>Username</label>
+            <input type="text" id="login-username" />
+            <label>Password</label>
+            <input type="password" id="login-password" />
+            <button id="login-btn">Login</button>
+            <div class="output" id="login-output"></div>
+        </div>
+
+        <div id="generate-section" class="hidden">
+            <h2>Generate Module & Test</h2>
+            <label>User ID</label>
+            <input type="text" id="generate-userid" />
+            <label>Concept</label>
+            <input type="text" id="generate-concept" />
+            <button id="generate-btn">Generate</button>
+            <div class="output" id="generate-output"></div>
+        </div>
+
+        <div id="diagnostic-section" class="hidden">
+            <h2>Submit Diagnostic Test</h2>
+            <label>Score</label>
+            <input type="text" id="diagnostic-score" />
+            <button id="diagnostic-btn">Submit</button>
+            <div class="output" id="diagnostic-output"></div>
+        </div>
+
+        <div id="explanation-section" class="hidden">
+            <h2>Get Explanation</h2>
+            <label>Concept</label>
+            <input type="text" id="explanation-concept" />
+            <label>Difficulty</label>
+            <input type="text" id="explanation-difficulty" placeholder="beginner, intermediate, advanced" />
+            <button id="explanation-btn">Get Explanation</button>
+            <div class="output" id="explanation-output"></div>
+        </div>
+
+        <div id="simplify-section" class="hidden">
+            <h2>Simplify Text</h2>
+            <label>Text</label>
+            <textarea id="simplify-text" rows="5"></textarea>
+            <button id="simplify-btn">Simplify</button>
+            <div class="output" id="simplify-output"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = "/api"; // API base URL relative to this site
+        let accessToken = "";
+
+        // Navigation buttons and sections
+        const navButtons = {
+            register: document.getElementById("nav-register"),
+            login: document.getElementById("nav-login"),
+            generate: document.getElementById("nav-generate"),
+            diagnostic: document.getElementById("nav-diagnostic"),
+            explanation: document.getElementById("nav-explanation"),
+            simplify: document.getElementById("nav-simplify"),
+        };
+
+        const sections = {
+            register: document.getElementById("register-section"),
+            login: document.getElementById("login-section"),
+            generate: document.getElementById("generate-section"),
+            diagnostic: document.getElementById("diagnostic-section"),
+            explanation: document.getElementById("explanation-section"),
+            simplify: document.getElementById("simplify-section"),
+        };
+
+        function showSection(name) {
+            for (const key in sections) {
+                if (key === name) {
+                    sections[key].classList.remove("hidden");
+                    navButtons[key].classList.add("active");
+                } else {
+                    sections[key].classList.add("hidden");
+                    navButtons[key].classList.remove("active");
+                }
+            }
+        }
+
+        // Navigation event listeners
+        for (const key in navButtons) {
+            navButtons[key].addEventListener("click", () => showSection(key));
+        }
+
+        // Register
+        document.getElementById("register-btn").addEventListener("click", async () => {
+            const username = document.getElementById("register-username").value;
+            const password = document.getElementById("register-password").value;
+            const email = document.getElementById("register-email").value;
+            const output = document.getElementById("register-output");
+
+            output.textContent = "Registering...";
+            try {
+                const res = await fetch(`${baseUrl}/register/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password, email }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    output.textContent = "Registration successful. Please login.";
+                } else {
+                    output.textContent = "Error: " + (data.error || JSON.stringify(data));
+                }
+            } catch (err) {
+                output.textContent = "Error: " + err.message;
+            }
+        });
+
+        // Login
+        document.getElementById("login-btn").addEventListener("click", async () => {
+            const username = document.getElementById("login-username").value;
+            const password = document.getElementById("login-password").value;
+            const output = document.getElementById("login-output");
+
+            output.textContent = "Logging in...";
+            try {
+                const res = await fetch(`${baseUrl}/login/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    accessToken = data.access;
+                    output.textContent = "Login successful.";
+                } else {
+                    output.textContent = "Error: " + (data.error || JSON.stringify(data));
+                }
+            } catch (err) {
+                output.textContent = "Error: " + err.message;
+            }
+        });
+
+        // Generate Module & Test
+        document.getElementById("generate-btn").addEventListener("click", async () => {
+            const user_id = document.getElementById("generate-userid").value;
+            const concept = document.getElementById("generate-concept").value;
+            const output = document.getElementById("generate-output");
+
+            if (!accessToken) {
+                output.textContent = "Please login first.";
+                return;
+            }
+
+            output.textContent = "Generating module and test...";
+            try {
+                const res = await fetch(`${baseUrl}/user-modules/generate_module/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + accessToken,
+                    },
+                    body: JSON.stringify({ user_id, concept }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    output.textContent = "Module:\n" + data.module_content + "\n\nTest:\n" + data.test_content;
+                } else {
+                    output.textContent = "Error: " + (data.error || JSON.stringify(data));
+                }
+            } catch (err) {
+                output.textContent = "Error: " + err.message;
+            }
+        });
+
+        // Submit Diagnostic Test
+        document.getElementById("diagnostic-btn").addEventListener("click", async () => {
+            const score = document.getElementById("diagnostic-score").value;
+            const output = document.getElementById("diagnostic-output");
+
+            if (!accessToken) {
+                output.textContent = "Please login first.";
+                return;
+            }
+
+            output.textContent = "Submitting diagnostic test...";
+            try {
+                const res = await fetch(`${baseUrl}/diagnostic/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + accessToken,
+                    },
+                    body: JSON.stringify({ score }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    output.textContent = "Diagnostic test submitted. Recommended level: " + data.recommended_level;
+                } else {
+                    output.textContent = "Error: " + (data.error || JSON.stringify(data));
+                }
+            } catch (err) {
+                output.textContent = "Error: " + err.message;
+            }
+        });
+
+        // Get Explanation
+        document.getElementById("explanation-btn").addEventListener("click", async () => {
+            const concept = document.getElementById("explanation-concept").value;
+            const difficulty = document.getElementById("explanation-difficulty").value || "intermediate";
+            const output = document.getElementById("explanation-output");
+
+            if (!accessToken) {
+                output.textContent = "Please login first.";
+                return;
+            }
+
+            output.textContent = "Getting explanation...";
+            try {
+                const res = await fetch(`${baseUrl}/get-explanation/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + accessToken,
+                    },
+                    body: JSON.stringify({ concept, difficulty }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    output.textContent = data.explanation;
+                } else {
+                    output.textContent = "Error: " + (data.error || JSON.stringify(data));
+                }
+            } catch (err) {
+                output.textContent = "Error: " + err.message;
+            }
+        });
+
+        // Simplify Text
+        document.getElementById("simplify-btn").addEventListener("click", async () => {
+            const text = document.getElementById("simplify-text").value;
+            const output = document.getElementById("simplify-output");
+
+            if (!accessToken) {
+                output.textContent = "Please login first.";
+                return;
+            }
+
+            output.textContent = "Simplifying text...";
+            try {
+                const res = await fetch(`${baseUrl}/simplify-text/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + accessToken,
+                    },
+                    body: JSON.stringify({ text }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    output.textContent = data.simplified_text;
+                } else {
+                    output.textContent = "Error: " + (data.error || JSON.stringify(data));
+                }
+            } catch (err) {
+                output.textContent = "Error: " + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
