@@ -77,14 +77,13 @@ class UserModuleViewSet(viewsets.ModelViewSet):
                 test_content=test_content
             )
 
-            return Response({
-                "module_content": module_content,
-                "test_content": test_content
-            }, status=status.HTTP_200_OK)
+            serialized = self.get_serializer(user_module)
+            return Response(serialized.data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
+        
 class TestAttemptViewSet(viewsets.ModelViewSet):
     queryset = TestAttempt.objects.all()
     serializer_class = TestAttemptSerializer
