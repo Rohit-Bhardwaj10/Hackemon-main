@@ -17,14 +17,18 @@ class Module(models.Model):
 
 class UserModule(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    module = models.ForeignKey(Module, on_delete=models.CASCADE)
-    completed = models.BooleanField(default=False)
-    completed_at = models.DateTimeField(null=True, blank=True)
+    concept = models.CharField(max_length=255)
+    level = models.CharField(max_length=50, choices=[
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    ])
+    module_content = models.TextField()
+    test_content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.module.title}"
-
-
+        return f"{self.user.username} - {self.concept} ({self.level})"
 class TestAttempt(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     module = models.ForeignKey(Module, on_delete=models.CASCADE)
@@ -42,3 +46,19 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"{self.user.username} Feedback"
+
+
+class DiagnosticTestResult(models.Model):
+    LEVEL_CHOICES = [
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    score = models.DecimalField(max_digits=5, decimal_places=2)
+    recommended_level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
+    taken_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.recommended_level} ({self.score}%)"
