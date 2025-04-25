@@ -82,8 +82,39 @@ class UserModuleViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        
+
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def create_test(self, request):
+        concept = request.data.get('concept')
+        level = request.data.get('level')
+
+        if not concept or not level:
+            return Response({"error": "Concept and level are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if level not in ['beginner', 'intermediate', 'advanced']:
+            return Response({"error": "Level must be 'beginner', 'intermediate', or 'advanced'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        test_prompt = f"Create a {level} level test with questions and answers based on the topic '{concept}'."
+
+        try:
+            model = genai.GenerativeModel('gemini-1.5-pro-latest')
+            test_response = model.generate_content(test_prompt)
+            test_content = test_response.text.strip()
+
+            user_module = UserModule.objects.create(
+                user=request.user,
+                concept=concept,
+                level=level,
+                module_content="",  # No module content, only test
+                test_content=test_content
+            )
+
+            serialized = self.get_serializer(user_module)
+            return Response(serialized.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class TestAttemptViewSet(viewsets.ModelViewSet):
     queryset = TestAttempt.objects.all()
     serializer_class = TestAttemptSerializer
